@@ -3,45 +3,222 @@ import pandas as pd
 from io import BytesIO
 from PIL import Image
 import os
+from datetime import datetime
+import time
 
 st.set_page_config(page_title="Busca Movimentos 711/712", layout="wide")
 
-# CSS customizado para rodapé
-st.markdown("""
+# ==================== SELETOR DE TEMA ====================
+st.sidebar.markdown("### 🎨 Tema de Aparência")
+tema_selecionado = st.sidebar.selectbox(
+    "Escolha o tema:",
+    [
+        "Tema 1: Preto e Amarelo", 
+        "Tema 2: Azul Marinho e Branco", 
+        "Tema 3: Cinza Escuro e Verde Fluorescente", 
+        "Tema 4: Futurista",
+        "Tema 5: Vermelho Escuro e Branco"
+    ],
+    index=0
+)
+
+# Definir cores baseado no tema
+if tema_selecionado == "Tema 1: Preto e Amarelo":
+    cor_fundo = "#000000"
+    cor_texto = "#FFD700"
+    cor_secundaria = "#FFA500"
+    cor_destaque = "#FFFF00"
+    animacao_led = ""
+elif tema_selecionado == "Tema 2: Azul Marinho e Branco":
+    cor_fundo = "#001F3F"
+    cor_texto = "#FFFFFF"
+    cor_secundaria = "#7FDBFF"
+    cor_destaque = "#39CCCC"
+    animacao_led = ""
+elif tema_selecionado == "Tema 3: Cinza Escuro e Verde Fluorescente":
+    cor_fundo = "#2C2C2C"
+    cor_texto = "#00FF00"
+    cor_secundaria = "#39FF14"
+    cor_destaque = "#7FFF00"
+    animacao_led = ""
+elif tema_selecionado == "Tema 4: Futurista":
+    cor_fundo = "#0D0221"
+    cor_texto = "#00FF41"
+    cor_secundaria = "#FF006E"
+    cor_destaque = "#8338EC"
+    # Animação de LED piscando por 10 segundos
+    animacao_led = """
+    @keyframes ledBlink {
+        0%, 100% { opacity: 1; text-shadow: 0 0 10px #00FF41, 0 0 20px #00FF41, 0 0 30px #00FF41; }
+        25% { opacity: 0.3; text-shadow: 0 0 5px #00FF41; }
+        50% { opacity: 1; text-shadow: 0 0 15px #8338EC, 0 0 25px #8338EC, 0 0 35px #8338EC; }
+        75% { opacity: 0.5; text-shadow: 0 0 8px #FF006E; }
+    }
+    
+    @keyframes ledPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    .tema-futurista h1, .tema-futurista h2, .tema-futurista h3 {
+        animation: ledBlink 2s ease-in-out infinite, ledPulse 3s ease-in-out infinite;
+        animation-duration: 10s;
+    }
+    
+    .tema-futurista .relogio {
+        animation: ledBlink 1.5s ease-in-out infinite !important;
+        animation-duration: 10s !important;
+    }
+    
+    .tema-futurista .stButton>button {
+        animation: ledBlink 2.5s ease-in-out infinite;
+        animation-duration: 10s;
+    }
+    
+    .tema-futurista {
+        animation-play-state: running;
+    }
+    """
+else:  # Tema 5: Vermelho Escuro e Branco
+    cor_fundo = "#8B0000"
+    cor_texto = "#FFFFFF"
+    cor_secundaria = "#DC143C"
+    cor_destaque = "#FF6347"
+    animacao_led = ""
+
+# CSS customizado baseado no tema
+st.markdown(f"""
     <style>
+    /* Tema de cores */
+    .stApp {{
+        background-color: {cor_fundo};
+    }}
+    
+    {animacao_led if tema_selecionado == "Tema 4: Futurista" else ""}
+    
+    /* Aplicar classe futurista se tema 4 */
+    {"body { } .stApp { }" if tema_selecionado != "Tema 4: Futurista" else "body .stApp, body .stApp * { } .stApp { }"}
+    
+    /* Textos principais */
+    h1, h2, h3, h4, h5, h6, p, span, div, label {{
+        color: {cor_texto} !important;
+    }}
+    
+    /* Relógio digital */
+    .relogio-container {{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        margin: 20px 0;
+        background: linear-gradient(135deg, {cor_secundaria}22, {cor_destaque}22);
+        border-radius: 15px;
+        border: 2px solid {cor_destaque};
+        box-shadow: 0 0 20px {cor_destaque}44;
+    }}
+    
+    .relogio {{
+        font-size: 48px;
+        font-weight: bold;
+        color: {cor_destaque};
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 0 10px {cor_destaque};
+    }}
+    
+    .data {{
+        font-size: 24px;
+        color: {cor_texto};
+        font-weight: bold;
+        margin-top: 10px;
+        text-align: center;
+    }}
+    
     /* Rodapé */
-    .footer {
+    .footer {{
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background-color: rgba(240, 242, 246, 0.9);
-        color: #666;
+        background-color: {cor_fundo}EE;
+        color: {cor_texto};
         text-align: center;
         padding: 10px;
         font-size: 11px;
-        border-top: 1px solid #ddd;
+        border-top: 2px solid {cor_destaque};
         z-index: 999;
-    }
-    /* Espaçamento para o rodapé não sobrepor conteúdo */
-    .main {
+    }}
+    
+    /* Espaçamento para o rodapé */
+    .main {{
         padding-bottom: 60px;
-    }
+    }}
+    
+    /* Botões */
+    .stButton>button {{
+        background-color: {cor_destaque};
+        color: {cor_fundo};
+        border: 2px solid {cor_secundaria};
+        font-weight: bold;
+    }}
+    
+    .stButton>button:hover {{
+        background-color: {cor_secundaria};
+        color: {cor_fundo};
+    }}
+    
+    /* Inputs */
+    .stTextInput>div>div>input {{
+        background-color: {cor_fundo};
+        color: {cor_texto};
+        border: 1px solid {cor_destaque};
+    }}
+    
+    .stSelectbox>div>div>select {{
+        background-color: {cor_fundo};
+        color: {cor_texto};
+        border: 1px solid {cor_destaque};
+    }}
+    
+    /* DataFrames */
+    .dataframe {{
+        background-color: {cor_fundo};
+        color: {cor_texto};
+    }}
+    
+    /* Métricas */
+    .css-1xarl3l {{
+        background-color: {cor_secundaria}22;
+        border: 1px solid {cor_destaque};
+        border-radius: 10px;
+    }}
+    
+    /* Sidebar */
+    section[data-testid="stSidebar"] {{
+        background-color: {cor_fundo}DD;
+    }}
+    
+    section[data-testid="stSidebar"] * {{
+        color: {cor_texto} !important;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
-# Tentar carregar logos da pasta
+# Adicionar classe tema-futurista ao body se tema 4
+if tema_selecionado == "Tema 4: Futurista":
+    st.markdown("""
+        <script>
+        document.body.classList.add('tema-futurista');
+        document.querySelector('.stApp').classList.add('tema-futurista');
+        </script>
+    """, unsafe_allow_html=True)
+
+# ==================== LOGOS ====================
 try:
     pasta_atual = os.path.dirname(os.path.abspath(__file__))
     
-    # Buscar logo Petrobras
     possiveis_logos_petrobras = [
-        'logo_petrobras.png',
-        'logo petrobras.png',
-        'petrobras.png',
-        'logo_petrobras.jpg',
-        'logo petrobras.jpg',
-        'petrobras.jpg'
+        'logo_petrobras.png', 'logo petrobras.png', 'petrobras.png',
+        'logo_petrobras.jpg', 'logo petrobras.jpg', 'petrobras.jpg'
     ]
     
     logo_petrobras_path = None
@@ -51,14 +228,9 @@ try:
             logo_petrobras_path = caminho
             break
     
-    # Buscar logo JSL
     possiveis_logos_jsl = [
-        'logo_jsl.png',
-        'logo jsl.png',
-        'jsl.png',
-        'logo_jsl.jpg',
-        'logo jsl.jpg',
-        'jsl.jpg'
+        'logo_jsl.png', 'logo jsl.png', 'jsl.png',
+        'logo_jsl.jpg', 'logo jsl.jpg', 'jsl.jpg'
     ]
     
     logo_jsl_path = None
@@ -68,7 +240,6 @@ try:
             logo_jsl_path = caminho
             break
     
-    # Exibir logos
     col_logo1, col_espaco, col_logo2 = st.columns([1, 3, 1])
     
     with col_logo1:
@@ -76,25 +247,55 @@ try:
             logo_petrobras = Image.open(logo_petrobras_path)
             st.image(logo_petrobras, width=120)
         else:
-            st.markdown("<div style='font-size: 24px; font-weight: bold; color: #006699; opacity: 0.7;'>⛽ PETROBRAS</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; font-weight: bold; color: {cor_texto}; opacity: 0.7;'>⛽ PETROBRAS</div>", unsafe_allow_html=True)
     
     with col_logo2:
         if logo_jsl_path:
             logo_jsl = Image.open(logo_jsl_path)
             st.image(logo_jsl, width=120)
         else:
-            st.markdown("<div style='font-size: 24px; font-weight: bold; color: #FF6600; opacity: 0.7;'>🚛 JSL</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; font-weight: bold; color: {cor_texto}; opacity: 0.7;'>🚛 JSL</div>", unsafe_allow_html=True)
 
 except Exception as e:
     col_logo1, col_espaco, col_logo2 = st.columns([1, 3, 1])
     with col_logo1:
-        st.markdown("<div style='font-size: 24px; font-weight: bold; color: #006699; opacity: 0.7;'>⛽ PETROBRAS</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size: 24px; font-weight: bold; color: {cor_texto}; opacity: 0.7;'>⛽ PETROBRAS</div>", unsafe_allow_html=True)
     with col_logo2:
-        st.markdown("<div style='font-size: 24px; font-weight: bold; color: #FF6600; opacity: 0.7;'>🚛 JSL</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size: 24px; font-weight: bold; color: {cor_texto}; opacity: 0.7;'>🚛 JSL</div>", unsafe_allow_html=True)
+
+# ==================== RELÓGIO DIGITAL ====================
+agora = datetime.now()
+hora_atual = agora.strftime("%H:%M:%S")
+
+# Traduzir dia da semana
+dias_semana = {
+    'Monday': 'Segunda-feira',
+    'Tuesday': 'Terça-feira',
+    'Wednesday': 'Quarta-feira',
+    'Thursday': 'Quinta-feira',
+    'Friday': 'Sexta-feira',
+    'Saturday': 'Sábado',
+    'Sunday': 'Domingo'
+}
+dia_semana_pt = dias_semana.get(agora.strftime("%A"), agora.strftime("%A"))
+data_formatada = agora.strftime(f"%d/%m/%Y - {dia_semana_pt}")
+
+# Adicionar classe tema-futurista ao relógio se tema 4
+classe_relogio = "tema-futurista" if tema_selecionado == "Tema 4: Futurista" else ""
+
+st.markdown(f"""
+    <div class="relogio-container {classe_relogio}">
+        <div>
+            <div class="relogio">{hora_atual}</div>
+            <div class="data">{data_formatada}</div>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 st.title("🔍 Sistema de Análise - Movimentos SAP 711/712")
 
-# Menu de navegação na sidebar
+# ==================== MENU DE NAVEGAÇÃO ====================
+st.sidebar.markdown("---")
 st.sidebar.title("📋 Menu de Navegação")
 opcao_menu = st.sidebar.radio(
     "Selecione a funcionalidade:",
@@ -104,7 +305,7 @@ opcao_menu = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 
-# Upload do arquivo (comum para ambas as funcionalidades)
+# Upload do arquivo
 st.sidebar.markdown("### 📤 Carregar Planilha")
 uploaded_file = st.sidebar.file_uploader("Selecione o arquivo Excel", type=["xlsx", "xls"])
 
@@ -123,7 +324,6 @@ if opcao_menu == "🔍 Busca de Movimentos":
         st.markdown("---")
         st.markdown("### 🔍 Buscar por Tipo de Movimento")
         
-        # Identificar automaticamente a coluna de tipo de movimento
         col_movimento = None
         for col in df.columns:
             col_lower = str(col).lower()
@@ -134,7 +334,6 @@ if opcao_menu == "🔍 Busca de Movimentos":
         if col_movimento is None:
             col_movimento = df.columns[0]
         
-        # Identificar coluna de usuário
         col_usuario = None
         for col in df.columns:
             col_lower = str(col).lower()
@@ -142,7 +341,6 @@ if opcao_menu == "🔍 Busca de Movimentos":
                 col_usuario = col
                 break
         
-        # Seleção do tipo de movimento
         col_filtro1, col_filtro2 = st.columns([1, 2])
         
         with col_filtro1:
@@ -163,7 +361,6 @@ if opcao_menu == "🔍 Busca de Movimentos":
                 st.warning("⚠️ Coluna de usuário não identificada automaticamente")
                 filtro_usuario = ""
         
-        # Botões de ação
         col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 4])
         with col_btn1:
             buscar = st.button("🔍 BUSCAR", type="primary", use_container_width=True)
@@ -173,7 +370,6 @@ if opcao_menu == "🔍 Busca de Movimentos":
         if limpar:
             st.rerun()
         
-        # Realizar busca
         if buscar:
             try:
                 df_resultado = df[df[col_movimento].astype(str).str.strip() == tipo_movimento].copy()
@@ -195,7 +391,6 @@ if opcao_menu == "🔍 Busca de Movimentos":
                         for filtro in filtros_aplicados:
                             st.markdown(f"• {filtro}")
                     
-                    # Identificar colunas
                     col_material = None
                     col_data = None
                     col_montante = None
@@ -279,7 +474,7 @@ if opcao_menu == "🔍 Busca de Movimentos":
                         df_exibicao.to_excel(writer, index=False, sheet_name=f'Movimento_{tipo_movimento}')
                     output.seek(0)
                     
-                    timestamp = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                     nome_arquivo = f"movimento_{tipo_movimento}"
                     if filtro_usuario:
                         nome_arquivo += f"_usuario"
@@ -295,15 +490,9 @@ if opcao_menu == "🔍 Busca de Movimentos":
                 
                 else:
                     st.warning(f"⚠️ Nenhum registro encontrado com os filtros aplicados")
-                    
-                    st.write("💡 **Sugestões:**")
-                    st.write("• Verifique se digitou o nome do usuário corretamente")
-                    st.write("• Tente usar apenas parte do nome")
-                    st.write("• Deixe o campo de usuário em branco para ver todos")
             
             except Exception as e:
                 st.error(f"❌ Erro ao processar a busca: {e}")
-                st.error("Verifique se a planilha está no formato correto.")
     
     else:
         st.info("📤 **Faça o upload do arquivo Excel** na barra lateral para começar")
@@ -322,7 +511,6 @@ elif opcao_menu == "🔄 Análise de Materiais Duplicados":
         
         st.markdown("---")
         
-        # Identificar coluna de movimento
         col_movimento = None
         for col in df.columns:
             col_lower = str(col).lower()
@@ -333,7 +521,6 @@ elif opcao_menu == "🔄 Análise de Materiais Duplicados":
         if col_movimento is None:
             col_movimento = df.columns[0]
         
-        # Identificar coluna de material
         col_material = None
         for col in df.columns:
             col_lower = str(col).lower().replace(" ", "").replace(".", "")
@@ -347,24 +534,19 @@ elif opcao_menu == "🔄 Análise de Materiais Duplicados":
         
         st.info(f"📊 Analisando coluna: **{col_movimento}** (Movimento) e **{col_material}** (Material)")
         
-        # Botão para análise
         if st.button("🔍 ANALISAR MATERIAIS DUPLICADOS", type="primary", use_container_width=True):
             try:
-                # Filtrar movimentos 711 e 712
                 df_711 = df[df[col_movimento].astype(str).str.strip() == "711"]
                 df_712 = df[df[col_movimento].astype(str).str.strip() == "712"]
                 
-                # Obter materiais únicos de cada movimento
                 materiais_711 = set(df_711[col_material].dropna().astype(str).str.strip())
                 materiais_712 = set(df_712[col_material].dropna().astype(str).str.strip())
                 
-                # Encontrar materiais em comum
                 materiais_duplicados = materiais_711.intersection(materiais_712)
                 
                 st.markdown("---")
                 st.markdown("### 📊 Resultados da Análise")
                 
-                # Estatísticas
                 col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
                 with col_stat1:
                     st.metric("📦 Materiais em 711", len(materiais_711))
@@ -379,13 +561,9 @@ elif opcao_menu == "🔄 Análise de Materiais Duplicados":
                 if len(materiais_duplicados) > 0:
                     st.success(f"✅ Encontrados **{len(materiais_duplicados)}** materiais que aparecem tanto em 711 quanto em 712")
                     
-                    # Criar dataframe com materiais duplicados
                     materiais_duplicados_lista = sorted(list(materiais_duplicados))
-                    df_duplicados = pd.DataFrame({
-                        'Material': materiais_duplicados_lista
-                    })
+                    df_duplicados = pd.DataFrame({'Material': materiais_duplicados_lista})
                     
-                    # Adicionar informações adicionais se disponível
                     col_texto = None
                     for col in df.columns:
                         col_original = str(col).lower()
@@ -403,7 +581,6 @@ elif opcao_menu == "🔄 Análise de Materiais Duplicados":
                     st.markdown("### 📋 Lista de Materiais Duplicados")
                     st.dataframe(df_duplicados, use_container_width=True, height=400)
                     
-                    # Exportar
                     st.markdown("---")
                     st.markdown("### 📥 Exportar Análise")
                     
@@ -412,7 +589,7 @@ elif opcao_menu == "🔄 Análise de Materiais Duplicados":
                         df_duplicados.to_excel(writer, index=False, sheet_name='Materiais_Duplicados')
                     output.seek(0)
                     
-                    timestamp = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                     
                     st.download_button(
                         label="📥 Baixar Lista de Materiais Duplicados",
@@ -429,26 +606,9 @@ elif opcao_menu == "🔄 Análise de Materiais Duplicados":
     
     else:
         st.info("📤 **Faça o upload do arquivo Excel** na barra lateral para começar a análise")
-        st.markdown("""
-        ### 📖 Sobre esta funcionalidade:
-        
-        Esta análise identifica **materiais que aparecem tanto nos movimentos 711 quanto nos 712**.
-        
-        **O que você verá:**
-        - Total de materiais únicos em cada movimento
-        - Lista completa dos materiais duplicados
-        - Percentual de duplicação
-        - Opção de exportar a lista em Excel
-        
-        **Como usar:**
-        1. Carregue o arquivo Excel na barra lateral
-        2. Clique em "ANALISAR MATERIAIS DUPLICADOS"
-        3. Visualize os resultados
-        4. Exporte a lista se necessário
-        """)
 
 # Rodapé
-st.markdown("""
+st.markdown(f"""
     <div class="footer">
         Programa desenvolvido por Djalma A Barbosa 2026. Todos os direitos reservados. ®
     </div>
